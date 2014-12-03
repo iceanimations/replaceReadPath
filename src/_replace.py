@@ -1,3 +1,4 @@
+import re
 import os
 import os.path as osp
 from PyQt4.QtGui import QApplication, QMessageBox, QFileDialog
@@ -18,10 +19,16 @@ class Window(Form, Base):
         
         self.currentDirectory = ''
         
+        self.progressBar.hide()
+        
         self.replaceButton.clicked.connect(self.replacePath)
         self.browseButton.clicked.connect(self.setPath)
         self.selectAllButton.clicked.connect(self.selectAllRead)
         self.pathBox.returnPressed.connect(self.replacePath)
+        
+    def closeEvent(self, event):
+        self.deleteLater()
+        del self
         
     def getSelectedNodes(self):
         nodes = []
@@ -77,6 +84,7 @@ class Window(Form, Base):
             for node in nodes:
                 nodePath = node.knob('file').value()
                 if nodePath:
+                    nodeName = node.name()
                     basename3 = util.basename3(nodePath)
                     flag = False
                     for d in passes_dirs:
@@ -85,7 +93,7 @@ class Window(Form, Base):
                             flag=True
                             break
                     if not flag:
-                        badNodesMapping[node.name()] = 'No directory matches the name '+ util.splitPath(basename3)[0]
+                        badNodesMapping[nodeName] = 'No directory matches the name '+ osp.join(path, util.splitPath(basename3)[0])
                         continue
                     passes = os.listdir(tempPath)
                     basenameMid = util.splitPath(basename3)[1]
@@ -100,18 +108,38 @@ class Window(Form, Base):
                                 tempPath = osp.join(tempPath, pas)
                                 flag = True
                     if not flag:
-                        badNodesMapping[node.name()] = 'No directory matches the name '+ basenameMid
+                        badNodesMapping[nodeName] = 'No directory matches the name '+ osp.join(tempPath, basenameMid)
                         continue
                     fileNames = os.listdir(tempPath)
                     if not fileNames:
-                        badNodesMapping[node.name()] = 'No file matches name '+ util.splitPath(basename3)[-1]
+                        badNodesMapping[nodeName] = 'No file matches name '+ osp.join(tempPath, util.splitPath(basename3)[-1])
                         continue
-                    newPath = osp.join(tempPath, fileNames[0])
-                    if osp.exists(newPath):
-                        node.knob('file').setValue(newPath.replace('\\', '/'))
+                    filename = fileNames[0]
+                    if len(fileNames) > 1:
+                        frames = []
+                        for phile in fileNames:
+                            try:
+                                frames.append(re.search('\d+\.', phile).group().strip('.'))
+                            except:
+                                pass
+                        if frames:
+                            frameNumber = frames[0]
+                        else:
+                            badNodesMapping[nodeName] = 'Frame number not found in the file name '+ osp.join(tempPath, filename)
+                            continue
+                        hashes = '#'*len(frameNumber)
+                        newPath = osp.join(tempPath, filename.replace(frameNumber, hashes))
                     else:
-                        badNodesMapping[node.name()] = newPath
+                        newPath = osp.join(tempPath, filename)
+                    node.knob('file').setValue(newPath.replace('\\', '/'))
+                    frames[:] = [int(frame) for frame in frames]
+                    maxValue = max(frames); minValue = min(frames)
+                    nuke.selectedNode().knob('first').setValue(minValue)
+                    nuke.selectedNode().knob('last').setValue(maxValue)
+                    nuke.selectedNode().knob('origlast').setValue(maxValue)
+                    nuke.selectedNode().knob('origfirst').setValue(minValue)
             if badNodesMapping:
+                #TODO: highlight the badNodes
                 detail = 'Could not replace the following nodes\' paths'
                 for node in badNodesMapping.keys():
                     detail += '\n\n'+node +'\n'+badNodesMapping[node]
