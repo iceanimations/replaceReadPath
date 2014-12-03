@@ -86,6 +86,7 @@ class Window(Form, Base):
                 if nodePath:
                     nodeName = node.name()
                     basename3 = util.basename3(nodePath)
+                    basename3Parts = util.splitPath(basename3)
                     flag = False
                     for d in passes_dirs:
                         if basename3[:3].lower() == d[:3].lower():
@@ -93,10 +94,10 @@ class Window(Form, Base):
                             flag=True
                             break
                     if not flag:
-                        badNodesMapping[nodeName] = 'No directory matches the name '+ osp.join(path, util.splitPath(basename3)[0])
+                        badNodesMapping[nodeName] = 'No directory matches the name '+ osp.join(path, basename3Parts[0])
                         continue
                     passes = os.listdir(tempPath)
-                    basenameMid = util.splitPath(basename3)[1]
+                    basenameMid = basename3Parts[1]
                     basenameMidParts = basenameMid.split('_')
                     basenameMidLen = len(basenameMidParts)
                     flag = False
@@ -104,7 +105,11 @@ class Window(Form, Base):
                         passParts = pas.split('_')
                         passLen = len(passParts)
                         if basenameMidLen == passLen:
-                            if set(basenameMidParts[1:]) == set(passParts[1:]):
+                            if basename3[:3].lower() == pas[:3].lower():
+                                start = 1
+                            else:
+                                start = 0
+                            if set([tname.lower() for tname in basenameMidParts[start:]]) == set([tname2.lower() for tname2 in passParts[start:]]):
                                 tempPath = osp.join(tempPath, pas)
                                 flag = True
                     if not flag:
@@ -112,7 +117,7 @@ class Window(Form, Base):
                         continue
                     fileNames = os.listdir(tempPath)
                     if not fileNames:
-                        badNodesMapping[nodeName] = 'No file matches name '+ osp.join(tempPath, util.splitPath(basename3)[-1])
+                        badNodesMapping[nodeName] = 'No file matches name '+ osp.join(tempPath, basename3Parts[-1])
                         continue
                     filename = fileNames[0]
                     if len(fileNames) > 1:
@@ -129,15 +134,15 @@ class Window(Form, Base):
                             continue
                         hashes = '#'*len(frameNumber)
                         newPath = osp.join(tempPath, filename.replace(frameNumber, hashes))
+                        frames[:] = [int(frame) for frame in frames]
+                        maxValue = max(frames); minValue = min(frames)
+                        nuke.selectedNode().knob('first').setValue(minValue)
+                        nuke.selectedNode().knob('last').setValue(maxValue)
+                        nuke.selectedNode().knob('origlast').setValue(maxValue)
+                        nuke.selectedNode().knob('origfirst').setValue(minValue)
                     else:
                         newPath = osp.join(tempPath, filename)
                     node.knob('file').setValue(newPath.replace('\\', '/'))
-                    frames[:] = [int(frame) for frame in frames]
-                    maxValue = max(frames); minValue = min(frames)
-                    nuke.selectedNode().knob('first').setValue(minValue)
-                    nuke.selectedNode().knob('last').setValue(maxValue)
-                    nuke.selectedNode().knob('origlast').setValue(maxValue)
-                    nuke.selectedNode().knob('origfirst').setValue(minValue)
             if badNodesMapping:
                 #TODO: highlight the badNodes
                 detail = 'Could not replace the following nodes\' paths'
