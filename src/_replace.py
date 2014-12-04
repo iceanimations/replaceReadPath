@@ -7,6 +7,7 @@ import msgBox
 import util
 reload(util)
 import nuke
+import appUsageApp
 
 rootPath = osp.dirname(osp.dirname(__file__))
 uiPath = osp.join(rootPath, 'ui')
@@ -25,6 +26,8 @@ class Window(Form, Base):
         self.browseButton.clicked.connect(self.setPath)
         self.selectAllButton.clicked.connect(self.selectAllRead)
         self.pathBox.returnPressed.connect(self.replacePath)
+        
+        appUsageApp.updateDatabase('replaceReadPath')
         
     def closeEvent(self, event):
         self.deleteLater()
@@ -164,7 +167,6 @@ class Window(Form, Base):
                     count += 1
             self.hideProgressBar()
             if badNodesMapping:
-                #TODO: highlight the badNodes
                 detail = 'Could not replace the following nodes\' paths'
                 for node in badNodesMapping.keys():
                     detail += '\n\n'+node +'\n'+badNodesMapping[node]
