@@ -168,7 +168,9 @@ class Window(Form, Base):
                 detail = 'Could not replace the following nodes\' paths'
                 for node in badNodesMapping.keys():
                     detail += '\n\n'+node +'\n'+badNodesMapping[node]
+                    nuke.toNode(node).knob('tile_color').setValue(0xff000000)
                 msgBox.showMessage(self, title='RRP',
                                    msg='System could not find some paths',
                                    icon=QMessageBox.Information,
                                    details=detail)
+                
