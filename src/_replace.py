@@ -1,7 +1,7 @@
 import re
 import os
 import os.path as osp
-from PyQt4.QtGui import QApplication, QMessageBox, QFileDialog
+from PyQt4.QtGui import QApplication, QMessageBox, QFileDialog, qApp
 from PyQt4 import uic
 import msgBox
 import util
@@ -64,6 +64,16 @@ class Window(Form, Base):
         for node in nuke.allNodes():
             if node.Class() == 'Read':
                 node.setSelected(True)
+                
+    def showProgressBar(self, maxVal=0):
+        self.progressBar.show()
+        self.progressBar.setMaximum(maxVal)
+        qApp.processEvents()
+    
+    def hideProgressBar(self):
+        self.progressBar.hide()
+        self.progressBar.setValue(0)
+        qApp.processEvents()
         
     def replacePath(self):
         nodes = self.getSelectedNodes()
@@ -81,6 +91,8 @@ class Window(Form, Base):
                                    msg='No directory found in the specified path',
                                    icon=QMessageBox.Information)
                 return
+            self.showProgressBar(len(nodes))
+            count = 1
             for node in nodes:
                 nodePath = node.knob('file').value()
                 if nodePath:
@@ -99,19 +111,23 @@ class Window(Form, Base):
                     passes = os.listdir(tempPath)
                     basenameMid = basename3Parts[1]
                     basenameMidParts = basenameMid.split('_')
-                    basenameMidLen = len(basenameMidParts)
+                    #basenameMidLen = len(basenameMidParts)
+                    parentDirInBasename3 = False
+                    if basename3Parts[0][:3].lower() == basenameMidParts[0][:3]:
+                        parentDirInBasename3 =True
                     flag = False
                     for pas in passes:
                         passParts = pas.split('_')
-                        passLen = len(passParts)
-                        if basenameMidLen == passLen:
-                            if basename3[:3].lower() == pas[:3].lower():
-                                start = 1
-                            else:
-                                start = 0
-                            if set([tname.lower() for tname in basenameMidParts[start:]]) == set([tname2.lower() for tname2 in passParts[start:]]):
-                                tempPath = osp.join(tempPath, pas)
-                                flag = True
+                        parentDirInPass = False
+                        if basename3Parts[0][:3] == passParts[0][:3]:
+                            parentDirInPass = True
+                        #passLen = len(passParts)
+                        #if basenameMidLen == passLen:
+                        start1 = 1 if parentDirInBasename3 else 0
+                        start2 = 1 if parentDirInPass else 0
+                        if set([tname.lower() for tname in basenameMidParts[start1:]]) == set([tname2.lower() for tname2 in passParts[start2:]]):
+                            tempPath = osp.join(tempPath, pas)
+                            flag = True
                     if not flag:
                         badNodesMapping[nodeName] = 'No directory matches the name '+ osp.join(tempPath, basenameMid)
                         continue
@@ -143,6 +159,10 @@ class Window(Form, Base):
                     else:
                         newPath = osp.join(tempPath, filename)
                     node.knob('file').setValue(newPath.replace('\\', '/'))
+                    self.progressBar.setValue(count)
+                    qApp.processEvents()
+                    count += 1
+            self.hideProgressBar()
             if badNodesMapping:
                 #TODO: highlight the badNodes
                 detail = 'Could not replace the following nodes\' paths'
