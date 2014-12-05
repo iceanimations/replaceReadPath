@@ -114,20 +114,30 @@ class Window(Form, Base):
                     passes = os.listdir(tempPath)
                     basenameMid = basename3Parts[1]
                     basenameMidParts = basenameMid.split('_')
-                    #basenameMidLen = len(basenameMidParts)
+                    
+                    # check if the basename3Parts[0] is in basename3Parts[1]
                     parentDirInBasename3 = False
-                    if basename3Parts[0][:3].lower() == basenameMidParts[0][:3]:
+                    if basename3Parts[0][:3].lower() == basenameMidParts[0][:3].lower():
                         parentDirInBasename3 =True
                     flag = False
                     for pas in passes:
                         passParts = pas.split('_')
+                        
+                        # check if the parent directory name of pass directory is in pass name 
                         parentDirInPass = False
-                        if basename3Parts[0][:3] == passParts[0][:3]:
+                        if osp.basename(tempPath)[:3].lower() == passParts[0][:3].lower():
                             parentDirInPass = True
-                        #passLen = len(passParts)
-                        #if basenameMidLen == passLen:
+                        
+                        # handle the case when there is no parent directory name in pass directory name
                         start1 = 1 if parentDirInBasename3 else 0
                         start2 = 1 if parentDirInPass else 0
+                        
+                        # handle the case when the parent directory is combination of two words joined with a underscore
+                        if parentDirInBasename3 and len(basename3Parts[0].split('_')) > 1:
+                            start1 += 1
+                        if parentDirInPass:
+                            if '_'.join(passParts[:2]).lower() == osp.basename(tempPath).lower():
+                                start2 += 1
                         if set([tname.lower() for tname in basenameMidParts[start1:]]) == set([tname2.lower() for tname2 in passParts[start2:]]):
                             tempPath = osp.join(tempPath, pas)
                             flag = True
