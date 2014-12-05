@@ -177,12 +177,13 @@ class Window(Form, Base):
                     count += 1
             self.hideProgressBar()
             if badNodesMapping:
-                detail = 'Could not replace the following nodes\' paths'
+                numNodes = len(badNodesMapping)
+                s = 's' if numNodes > 1 else ''
+                detail = ''
                 for node in badNodesMapping.keys():
-                    detail += '\n\n'+node +'\n'+badNodesMapping[node]
+                    detail += node +'\n'+badNodesMapping[node] + '\n\n'
                     nuke.toNode(node).knob('tile_color').setValue(0xff000000)
                 msgBox.showMessage(self, title='RRP',
-                                   msg='System could not find some paths',
+                                   msg='Could not replace '+ str(numNodes) +' path'+s,
                                    icon=QMessageBox.Information,
                                    details=detail)
-                
