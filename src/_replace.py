@@ -5,8 +5,8 @@ from PyQt4.QtGui import QApplication, QMessageBox, QFileDialog, qApp
 from PyQt4 import uic
 import msgBox
 reload(msgBox)
-import iutil
-reload(iutil)
+import qutil
+reload(qutil)
 import nuke
 import appUsageApp
 
