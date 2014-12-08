@@ -4,8 +4,9 @@ import os.path as osp
 from PyQt4.QtGui import QApplication, QMessageBox, QFileDialog, qApp
 from PyQt4 import uic
 import msgBox
-import util
-reload(util)
+reload(msgBox)
+import iutil
+reload(iutil)
 import nuke
 import appUsageApp
 
@@ -100,8 +101,8 @@ class Window(Form, Base):
                 nodePath = node.knob('file').value()
                 if nodePath:
                     nodeName = node.name()
-                    basename3 = util.basename3(nodePath)
-                    basename3Parts = util.splitPath(basename3)
+                    basename3 = iutil.basename3(nodePath)
+                    basename3Parts = iutil.splitPath(basename3)
                     flag = False
                     for d in passes_dirs:
                         if basename3[:3].lower() == d[:3].lower():
@@ -184,6 +185,6 @@ class Window(Form, Base):
                     detail += node +'\n'+badNodesMapping[node] + '\n\n'
                     nuke.toNode(node).knob('tile_color').setValue(0xff000000)
                 msgBox.showMessage(self, title='RRP',
-                                   msg='Could not replace '+ str(numNodes) +' path'+s,
+                                   msg='Could not replace the path for '+ str(numNodes) +' node'+s,
                                    icon=QMessageBox.Information,
                                    details=detail)
