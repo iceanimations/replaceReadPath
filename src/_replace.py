@@ -101,8 +101,8 @@ class Window(Form, Base):
                 nodePath = node.knob('file').value()
                 if nodePath:
                     nodeName = node.name()
-                    basename3 = iutil.basename3(nodePath)
-                    basename3Parts = iutil.splitPath(basename3)
+                    basename3 = qutil.basename3(nodePath)
+                    basename3Parts = qutil.splitPath(basename3)
                     flag = False
                     for d in passes_dirs:
                         if basename3[:3].lower() == d[:3].lower():
