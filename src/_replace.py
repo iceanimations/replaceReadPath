@@ -98,6 +98,7 @@ class Window(Form, Base):
             self.showProgressBar(len(nodes))
             count = 1
             for node in nodes:
+                print node.name(), node.Class()
                 nodePath = node.knob('file').value()
                 if nodePath:
                     nodeName = node.name()
@@ -166,10 +167,10 @@ class Window(Form, Base):
                         newPath = osp.join(tempPath, filename.replace(frameNumber, hashes))
                         frames[:] = [int(frame) for frame in frames]
                         maxValue = max(frames); minValue = min(frames)
-                        nuke.selectedNode().knob('first').setValue(minValue)
-                        nuke.selectedNode().knob('last').setValue(maxValue)
-                        nuke.selectedNode().knob('origlast').setValue(maxValue)
-                        nuke.selectedNode().knob('origfirst').setValue(minValue)
+                        node.knob('first').setValue(minValue)
+                        node.knob('last').setValue(maxValue)
+                        node.knob('origlast').setValue(maxValue)
+                        node.knob('origfirst').setValue(minValue)
                     else:
                         newPath = osp.join(tempPath, filename)
                     node.knob('file').setValue(newPath.replace('\\', '/'))
