@@ -98,7 +98,6 @@ class Window(Form, Base):
             self.showProgressBar(len(nodes))
             count = 1
             for node in nodes:
-                print node.name(), node.Class()
                 nodePath = node.knob('file').value()
                 if nodePath:
                     nodeName = node.name()
