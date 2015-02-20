@@ -27,8 +27,14 @@ class Window(Form, Base):
         self.browseButton.clicked.connect(self.setPath)
         self.selectAllButton.clicked.connect(self.selectAllRead)
         self.pathBox.returnPressed.connect(self.replacePath)
+        self.rtdButton.clicked.connect(self.rtd)
         
         appUsageApp.updateDatabase('replaceReadPath')
+        
+    def rtd(self):
+        import redToDefault
+        reload(redToDefault)
+        redToDefault.change()
         
     def closeEvent(self, event):
         self.deleteLater()
