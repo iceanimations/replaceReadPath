@@ -9,20 +9,44 @@ import qutil
 reload(qutil)
 import nuke
 import appUsageApp
+import json
 
 rootPath = osp.dirname(osp.dirname(__file__))
 uiPath = osp.join(rootPath, 'ui')
+
+conf = {}
+conf['lastDirectory'] = osp.expanduser('~')
+confPath = osp.join(osp.expanduser('~'), '.nuke', 'rrp.json')
+
+def readConf():
+    global conf
+    try:
+        with open(confPath) as fp:
+            conf = json.load(fp)
+    except:
+        pass
+
+def writeConf():
+    try:
+        with open(confPath, 'w') as fp:
+            json.dump(conf, fp)
+    except:
+        pass
+
+readConf()
+
 
 Form, Base = uic.loadUiType(osp.join(uiPath, 'main.ui'))
 class Window(Form, Base):
     def __init__(self, parent=QApplication.activeWindow()):
         super(Window, self).__init__(parent)
         self.setupUi(self)
-        
-        self.currentDirectory = ''
-        
+
+        self.currentDirectory = conf.get('lastDirectory', '')
+        self.pathBox.setText(self.currentDirectory)
+
         self.progressBar.hide()
-        
+
         self.replaceButton.clicked.connect(self.replacePath)
         self.browseButton.clicked.connect(self.setPath)
         self.selectAllButton.clicked.connect(self.selectAllRead)
@@ -32,18 +56,18 @@ class Window(Form, Base):
         self.selectAllButton.hide()
         
         appUsageApp.updateDatabase('replaceReadPath')
-        
+
     def rtd(self):
         self.rtdButton.setStyleSheet('background-color: darkRed')
         import redToDefault
         reload(redToDefault)
         redToDefault.change()
         self.statusBar().showMessage('Converted to default successfully', 2000)
-        
+
     def closeEvent(self, event):
         self.deleteLater()
         del self
-        
+
     def getSelectedNodes(self):
         nodes = []
         selected = nuke.selectedNodes()
@@ -52,14 +76,16 @@ class Window(Form, Base):
                 if node.Class() == 'Read':
                     nodes.append(node)
         return nodes
-    
+
     def setPath(self):
         path = QFileDialog.getExistingDirectory(self, 'Select Directory',
                                                 self.currentDirectory)
         if path:
             self.pathBox.setText(path)
             self.currentDirectory = path
-    
+            conf['lastDirectory'] = path
+            writeConf()
+
     def getPath(self):
         path = self.pathBox.text()
         if not path:
@@ -73,22 +99,22 @@ class Window(Form, Base):
                                icon=QMessageBox.Information)
             return
         return path
-    
+
     def selectAllRead(self):
         for node in nuke.allNodes():
             if node.Class() == 'Read':
                 node.setSelected(True)
-                
+
     def showProgressBar(self, maxVal=0):
         self.progressBar.show()
         self.progressBar.setMaximum(maxVal)
         qApp.processEvents()
-    
+
     def hideProgressBar(self):
         self.progressBar.hide()
         self.progressBar.setValue(0)
         qApp.processEvents()
-        
+
     def replacePath(self):
         nodes = self.getSelectedNodes()
         if not nodes:
@@ -125,7 +151,7 @@ class Window(Form, Base):
                     passes = os.listdir(tempPath)
                     basenameMid = basename3Parts[1]
                     basenameMidParts = basenameMid.split('_')
-                    
+
                     # check if the basename3Parts[0] is in basename3Parts[1]
                     parentDirInBasename3 = False
                     if basename3Parts[0][:3].lower() == basenameMidParts[0][:3].lower():
@@ -133,16 +159,16 @@ class Window(Form, Base):
                     flag = False
                     for pas in passes:
                         passParts = pas.split('_')
-                        
-                        # check if the parent directory name of pass directory is in pass name 
+
+                        # check if the parent directory name of pass directory is in pass name
                         parentDirInPass = False
                         if osp.basename(tempPath)[:3].lower() == passParts[0][:3].lower():
                             parentDirInPass = True
-                        
+
                         # handle the case when there is no parent directory name in pass directory name
                         start1 = 1 if parentDirInBasename3 else 0
                         start2 = 1 if parentDirInPass else 0
-                        
+
                         # handle the case when the parent directory is combination of two words joined with a underscore
                         if parentDirInBasename3 and len(basename3Parts[0].split('_')) > 1:
                             start1 += 1
