@@ -27,14 +27,18 @@ class Window(Form, Base):
         self.browseButton.clicked.connect(self.setPath)
         self.selectAllButton.clicked.connect(self.selectAllRead)
         self.pathBox.returnPressed.connect(self.replacePath)
-        self.rtdButton.clicked.connect(self.rtd)
+        self.rtdButton.mousePressEvent = lambda event: self.rtdButton.setStyleSheet('background-color: #5E2612')
+        self.rtdButton.mouseReleaseEvent = lambda event: self.rtd()
+        self.selectAllButton.hide()
         
         appUsageApp.updateDatabase('replaceReadPath')
         
     def rtd(self):
+        self.rtdButton.setStyleSheet('background-color: darkRed')
         import redToDefault
         reload(redToDefault)
         redToDefault.change()
+        self.statusBar().showMessage('Converted to default successfully', 2000)
         
     def closeEvent(self, event):
         self.deleteLater()
