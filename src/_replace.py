@@ -35,6 +35,8 @@ def writeConf():
 
 readConf()
 
+__title__ = 'Read Node Tool'
+
 
 Form, Base = uic.loadUiType(osp.join(uiPath, 'main.ui'))
 class Window(Form, Base):
@@ -53,6 +55,7 @@ class Window(Form, Base):
         self.pathBox.returnPressed.connect(self.replacePath)
         self.rtdButton.mousePressEvent = lambda event: self.rtdButton.setStyleSheet('background-color: #5E2612')
         self.rtdButton.mouseReleaseEvent = lambda event: self.rtd()
+        self.nearestFrameButton.clicked.connect(self.setToNearestFrame)
         self.selectAllButton.hide()
         
         appUsageApp.updateDatabase('replaceReadPath')
@@ -63,19 +66,26 @@ class Window(Form, Base):
         reload(redToDefault)
         if redToDefault.change():
             self.statusBar().showMessage('Converted to default successfully', 2000)
+            
+    def setToNearestFrame(self):
+        nodes = self.getSelectedNodes()
+        if nodes:
+            for node in nodes:
+                node.knob('on_error').setValue(3)
 
     def closeEvent(self, event):
         self.deleteLater()
         del self
 
     def getSelectedNodes(self):
-        nodes = []
-        selected = nuke.selectedNodes()
-        if selected:
-            for node in selected:
-                if node.Class() == 'Read':
-                    nodes.append(node)
+        nodes = nuke.selectedNodes('Read')
+        if not nodes:
+            msgBox.showMessage(self, title=__title__,
+                               msg='No Read node found in the selection',
+                               icon=QMessageBox.Information)
         return nodes
+    
+    
 
     def setPath(self):
         path = QFileDialog.getExistingDirectory(self, 'Select Directory',
@@ -89,12 +99,12 @@ class Window(Form, Base):
     def getPath(self):
         path = self.pathBox.text()
         if not path:
-            msgBox.showMessage(self, title='RRP',
+            msgBox.showMessage(self, title=__title__,
                                msg='Sequence path not specified',
                                icon=QMessageBox.Information)
             return
         if not osp.exists(path):
-            msgBox.showMessage(self, title='RRP',
+            msgBox.showMessage(self, title=__title__,
                                msg='Specified path does not exist',
                                icon=QMessageBox.Information)
             return
@@ -118,16 +128,13 @@ class Window(Form, Base):
     def replacePath(self):
         nodes = self.getSelectedNodes()
         if not nodes:
-            msgBox.showMessage(self, title='RRP',
-                               msg='No Read node is currently selected',
-                               icon=QMessageBox.Information)
             return
         path = self.getPath()
         if path:
             badNodesMapping = {}
             passes_dirs = os.listdir(path)
             if not passes_dirs:
-                msgBox.showMessage(self, title='RRP',
+                msgBox.showMessage(self, title=__title__,
                                    msg='No directory found in the specified path',
                                    icon=QMessageBox.Information)
                 return
@@ -220,7 +227,7 @@ class Window(Form, Base):
                 for node in badNodesMapping.keys():
                     detail += node +'\n'+badNodesMapping[node] + '\n\n'
                     nuke.toNode(node).knob('tile_color').setValue(0xff000000)
-                msgBox.showMessage(self, title='RRP',
+                msgBox.showMessage(self, title=__title__,
                                    msg='Could not replace the path for '+ str(numNodes) +' node'+s,
                                    icon=QMessageBox.Information,
                                    details=detail)

@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>RRP</string>
+   <string>Read Node Tool</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
@@ -51,6 +51,13 @@
         </property>
         <property name="text">
          <string>Red to Default</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="nearestFrameButton">
+        <property name="text">
+         <string>Nearest Frame</string>
         </property>
        </widget>
       </item>
