@@ -61,8 +61,8 @@ class Window(Form, Base):
         self.rtdButton.setStyleSheet('background-color: darkRed')
         import redToDefault
         reload(redToDefault)
-        redToDefault.change()
-        self.statusBar().showMessage('Converted to default successfully', 2000)
+        if redToDefault.change():
+            self.statusBar().showMessage('Converted to default successfully', 2000)
 
     def closeEvent(self, event):
         self.deleteLater()
