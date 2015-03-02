@@ -57,6 +57,7 @@ class Window(Form, Base):
         self.rtdButton.mouseReleaseEvent = lambda event: self.rtd()
         self.nearestFrameButton.clicked.connect(self.setToNearestFrame)
         self.selectAllButton.hide()
+        self.nearestFrameButton.hide()
         
         appUsageApp.updateDatabase('replaceReadPath')
 
