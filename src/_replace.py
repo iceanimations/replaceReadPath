@@ -51,13 +51,10 @@ class Window(Form, Base):
 
         self.replaceButton.clicked.connect(self.replacePath)
         self.browseButton.clicked.connect(self.setPath)
-        self.selectAllButton.clicked.connect(self.selectAllRead)
         self.pathBox.returnPressed.connect(self.replacePath)
         self.rtdButton.mousePressEvent = lambda event: self.rtdButton.setStyleSheet('background-color: #5E2612')
         self.rtdButton.mouseReleaseEvent = lambda event: self.rtd()
-        self.nearestFrameButton.clicked.connect(self.setToNearestFrame)
-        self.selectAllButton.hide()
-        self.nearestFrameButton.hide()
+        self.reloadButton.clicked.connect(self.reloadSelected)
         
         appUsageApp.updateDatabase('replaceReadPath')
 
@@ -68,11 +65,9 @@ class Window(Form, Base):
         if redToDefault.change():
             self.statusBar().showMessage('Converted to default successfully', 2000)
             
-    def setToNearestFrame(self):
-        nodes = self.getSelectedNodes()
-        if nodes:
-            for node in nodes:
-                node.knob('on_error').setValue(3)
+    def reloadSelected(self):
+        for node in self.getSelectedNodes():
+            node.knob('reload').execute()
 
     def closeEvent(self, event):
         self.deleteLater()
@@ -110,11 +105,6 @@ class Window(Form, Base):
                                icon=QMessageBox.Information)
             return
         return path
-
-    def selectAllRead(self):
-        for node in nuke.allNodes():
-            if node.Class() == 'Read':
-                node.setSelected(True)
 
     def showProgressBar(self, maxVal=0):
         self.progressBar.show()
