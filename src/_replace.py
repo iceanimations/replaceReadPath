@@ -165,12 +165,15 @@ class Window(Form, Base):
             bd_orig = bd_orig[0]
             seqPath = self.getPath()
             currentShotPath = self.getShotPath() # shot path for selected backdrop
+            errors = []
             if seqPath:
                 shotNames = os.listdir(seqPath)
                 shotNames.remove(osp.basename(osp.dirname(currentShotPath)))
-                seqName = osp.dirname(seqPath)
+                shotLen = len(shotNames)
+                shotNames = sorted(shotNames)
+                seqName = osp.basename(seqPath)
                 self.mainProgressBar.show()
-                self.mainProgressBar.setMaximum(len(shotNames))
+                self.mainProgressBar.setMaximum(shotLen)
                 for i, shotName in enumerate(shotNames):
                     seq_sh = '_'.join([seqName, shotName])
                     shotPath = osp.join(seqPath, shotName)
@@ -178,9 +181,9 @@ class Window(Form, Base):
                     if dirs:
                         dirName = None
                         if len(dirs) > 1:
-                            for directory in dirs:
-                                if seq_sh in directory:
-                                    dirName = directory
+                            for d in dirs:
+                                if seq_sh in d:
+                                    dirName = d
                                     break
                         else:
                             dirName = dirs[0]
@@ -188,6 +191,7 @@ class Window(Form, Base):
                             shotFullPath = osp.join(shotPath, dirName)
                             nukescripts.node_copypaste()
                             bd = self.getSelectedNodes(typ='BackdropNode')[0]
+                            bd.knob('label').setValue(shotName)
                             bd_nodes = nuke.selectedNodes()
                             bd_nodes.remove(bd)
                             y = bd.ypos()
@@ -200,16 +204,25 @@ class Window(Form, Base):
                                 node.setXYpos(node.xpos() + xDiff, node.ypos() + yDiff)
                             self.replacePath(shotFullPath)
                             bd_orig = bd
+                            shotLen -= 1
+                        else:
+                            errors.append('Could not find shot directory in %s'%shotPath)
+                    else:
+                        errors.append('No directory found in %s'%shotPath)
                     self.mainProgressBar.setValue(i+1)
                 self.mainProgressBar.setValue(0)
                 self.mainProgressBar.setMaximum(0)
                 self.progressBar.hide()
                 self.mainProgressBar.hide()
+        if errors:
+            details = '\n\n'.join(errors)
+            msgBox.showMessage(self, title=__title__,
+                               msg='Could not create comps for %s shots'%shotLen,
+                               details=details, icon=QMessageBox.Information)
         if self.redNodes:
             msgBox.showMessage(self, title=__title__,
                                msg='Could not replace paths for some Read nodes. They are marked as Red',
-                               icon=QMessageBox.Information,
-                               btns=QMessageBox.Ok)
+                               icon=QMessageBox.Information)
             del self.redNodes[:]
 
     def replacePath(self, path=None):
