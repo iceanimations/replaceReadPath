@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>686</width>
-    <height>105</height>
+    <height>149</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -15,6 +15,16 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+     <widget class="QCheckBox" name="createButton">
+      <property name="toolTip">
+       <string>Create backdrops for all shots in the specified sequence directory</string>
+      </property>
+      <property name="text">
+       <string>Create Shots</string>
+      </property>
+     </widget>
+    </item>
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout">
       <item>
@@ -94,6 +104,13 @@
        </size>
       </property>
      </spacer>
+    </item>
+    <item>
+     <widget class="QProgressBar" name="mainProgressBar">
+      <property name="value">
+       <number>0</number>
+      </property>
+     </widget>
     </item>
     <item>
      <widget class="QProgressBar" name="progressBar">

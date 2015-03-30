@@ -1,3 +1,9 @@
+'''
+Created on Jan 28, 2015
+
+@author: qurban.ali
+'''
+
 import re
 import os
 import os.path as osp
@@ -8,14 +14,24 @@ reload(msgBox)
 import qutil
 reload(qutil)
 import nuke
+import nukescripts
 import appUsageApp
 import json
+import time
 
 rootPath = osp.dirname(osp.dirname(__file__))
 uiPath = osp.join(rootPath, 'ui')
 
+def getAnyReadPath():
+    '''selects a random read node from the comp and returns it's path'''
+    for node in nuke.allNodes('Read'):
+        path = node.knob('file').value()
+        if path and osp.exists(osp.dirname(path)):
+            return qutil.dirname(path)
+    return "\\\\renders\\Storage\\Projects\\external\\Al_Mansour_Season_02\\02_production"
+
 conf = {}
-conf['lastDirectory'] = osp.expanduser('~')
+conf['lastDirectory'] = getAnyReadPath()
 confPath = osp.join(osp.expanduser('~'), '.nuke', 'rrp.json')
 
 def readConf():
@@ -46,17 +62,23 @@ class Window(Form, Base):
 
         self.currentDirectory = conf.get('lastDirectory', '')
         self.pathBox.setText(self.currentDirectory)
+        self.redNodes = []
 
         self.progressBar.hide()
+        self.mainProgressBar.hide()
 
-        self.replaceButton.clicked.connect(self.replacePath)
+        self.replaceButton.clicked.connect(self.handleReplaceButton)
         self.browseButton.clicked.connect(self.setPath)
-        self.pathBox.returnPressed.connect(self.replacePath)
+        self.pathBox.returnPressed.connect(self.handleReplaceButton)
         self.rtdButton.mousePressEvent = lambda event: self.rtdButton.setStyleSheet('background-color: #5E2612')
         self.rtdButton.mouseReleaseEvent = lambda event: self.rtd()
         self.reloadButton.clicked.connect(self.reloadSelected)
+        self.createButton.toggled.connect(self.handleSeqButton)
         
         appUsageApp.updateDatabase('replaceReadPath')
+        
+    def handleSeqButton(self, val):
+        self.replaceButton.setText('Create') if val else self.replaceButton.setText('Replace')
 
     def rtd(self):
         self.rtdButton.setStyleSheet('background-color: darkRed')
@@ -72,16 +94,9 @@ class Window(Form, Base):
     def closeEvent(self, event):
         self.deleteLater()
         del self
-
-    def getSelectedNodes(self):
-        nodes = nuke.selectedNodes('Read')
-        if not nodes:
-            msgBox.showMessage(self, title=__title__,
-                               msg='No Read node found in the selection',
-                               icon=QMessageBox.Information)
-        return nodes
     
-    
+    def createSeq(self):
+        return self.createButton.isChecked()
 
     def setPath(self):
         path = QFileDialog.getExistingDirectory(self, 'Select Directory',
@@ -112,19 +127,101 @@ class Window(Form, Base):
         qApp.processEvents()
 
     def hideProgressBar(self):
-        self.progressBar.hide()
+        if not self.createSeq():
+            self.progressBar.hide()
         self.progressBar.setValue(0)
         qApp.processEvents()
+        
+    def handleReplaceButton(self):
+        if self.createSeq():
+            self.createSequence()
+        else: self.replacePath()
+        
+    def getSelectedNodes(self, typ='Read'):
+        nodes = nuke.selectedNodes(typ)
+        if not nodes:
+            msg.showMessage(self, title=__title__,
+                            msg='No "%s" found in the selection'%typ,
+                            icon=QMessageBox.Information)
+        return nodes
+    
+    def getShotPath(self):
+        nodes = self.getSelectedNodes()
+        if nodes:
+            node = nodes[0]
+            path = node.knob('file').value()
+            if path:
+                return qutil.dirname(path)
 
-    def replacePath(self):
+    def createSequence(self):
+        del self.redNodes[:]
+        bd_orig = self.getSelectedNodes(typ='BackdropNode')
+        if bd_orig:
+            if len(bd_orig) > 1:
+                msgBox.showMessage(self, title=__title__,
+                                   msg='More than one backdrops found in the selection',
+                                   icon=QMessageBox.Information)
+                return
+            bd_orig = bd_orig[0]
+            seqPath = self.getPath()
+            currentShotPath = self.getShotPath() # shot path for selected backdrop
+            if seqPath:
+                shotNames = os.listdir(seqPath)
+                shotNames.remove(osp.basename(osp.dirname(currentShotPath)))
+                seqName = osp.dirname(seqPath)
+                self.mainProgressBar.show()
+                self.mainProgressBar.setMaximum(len(shotNames))
+                for i, shotName in enumerate(shotNames):
+                    seq_sh = '_'.join([seqName, shotName])
+                    shotPath = osp.join(seqPath, shotName)
+                    dirs = os.listdir(shotPath)
+                    if dirs:
+                        dirName = None
+                        if len(dirs) > 1:
+                            for directory in dirs:
+                                if seq_sh in directory:
+                                    dirName = directory
+                                    break
+                        else:
+                            dirName = dirs[0]
+                        if dirName:
+                            shotFullPath = osp.join(shotPath, dirName)
+                            nukescripts.node_copypaste()
+                            bd = self.getSelectedNodes(typ='BackdropNode')[0]
+                            bd_nodes = nuke.selectedNodes()
+                            bd_nodes.remove(bd)
+                            y = bd.ypos()
+                            x = bd.xpos()
+                            bd.setYpos(bd_orig.ypos())
+                            bd.setXpos(bd_orig.xpos() + bd.screenWidth() + 50)
+                            yDiff = bd.ypos() - y
+                            xDiff = bd.xpos() - x
+                            for node in bd_nodes:
+                                node.setXYpos(node.xpos() + xDiff, node.ypos() + yDiff)
+                            self.replacePath(shotFullPath)
+                            bd_orig = bd
+                    self.mainProgressBar.setValue(i+1)
+                self.mainProgressBar.setValue(0)
+                self.mainProgressBar.setMaximum(0)
+                self.progressBar.hide()
+                self.mainProgressBar.hide()
+        if self.redNodes:
+            msgBox.showMessage(self, title=__title__,
+                               msg='Could not replace paths for some Read nodes. They are marked as Red',
+                               icon=QMessageBox.Information,
+                               btns=QMessageBox.Ok)
+            del self.redNodes[:]
+
+    def replacePath(self, path=None):
         nodes = self.getSelectedNodes()
         if not nodes:
             return
-        path = self.getPath()
+        if not path:
+            path = self.getPath()
         if path:
             badNodesMapping = {}
             passes_dirs = os.listdir(path)
-            if not passes_dirs:
+            if not passes_dirs and not self.createSeq():
                 msgBox.showMessage(self, title=__title__,
                                    msg='No directory found in the specified path',
                                    icon=QMessageBox.Information)
@@ -135,7 +232,7 @@ class Window(Form, Base):
                 nodePath = node.knob('file').value()
                 if nodePath:
                     nodeName = node.name()
-                    basename3 = qutil.basename3(nodePath)
+                    basename3 = qutil.basename(nodePath)
                     basename3Parts = qutil.splitPath(basename3)
                     flag = False
                     for d in passes_dirs:
@@ -150,7 +247,7 @@ class Window(Form, Base):
                     basenameMid = basename3Parts[1]
                     basenameMidParts = basenameMid.split('_')
 
-                    # check if the basename3Parts[0] is in basename3Parts[1]
+                    # check if the basename3Parts[0] is in basename3Parts[1] eg. Env is in Env_beauty
                     parentDirInBasename3 = False
                     if basename3Parts[0][:3].lower() == basenameMidParts[0][:3].lower():
                         parentDirInBasename3 =True
@@ -218,7 +315,10 @@ class Window(Form, Base):
                 for node in badNodesMapping.keys():
                     detail += node +'\n'+badNodesMapping[node] + '\n\n'
                     nuke.toNode(node).knob('tile_color').setValue(0xff000000)
-                msgBox.showMessage(self, title=__title__,
-                                   msg='Could not replace the path for '+ str(numNodes) +' node'+s,
-                                   icon=QMessageBox.Information,
-                                   details=detail)
+                if not self.createSeq():
+                    msgBox.showMessage(self, title=__title__,
+                                       msg='Could not replace the path for '+ str(numNodes) +' node'+s,
+                                       icon=QMessageBox.Information,
+                                       details=detail)
+                else:
+                    self.redNodes.extend([node for node in badNodesMapping.keys()])
