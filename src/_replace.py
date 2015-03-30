@@ -156,6 +156,22 @@ class Window(Form, Base):
     def createSequence(self):
         del self.redNodes[:]
         bd_orig = self.getSelectedNodes(typ='BackdropNode')
+        writeNode = self.getSelectedNodes('Write')
+        msg = ''
+        if not writeNode:
+            msg = 'Selected BackdropNode does not contain a Write node'
+        if len(writeNode) > 1:
+            msg = 'More than one write nodes found in the selection'
+        if msg:
+            btn = msgBox.showMessage(self, title=__title__,
+                                     msg=msg,
+                                     ques='Do you want to proceed?',
+                                     icon=QMessageBox.Information,
+                                     btns=QMessageBox.Yes|QMessageBox.No)
+            if btn == QMessageBox.No:
+                return
+        if writeNode:
+            writeNode = writeNode[0]
         if bd_orig:
             if len(bd_orig) > 1:
                 msgBox.showMessage(self, title=__title__,
@@ -191,7 +207,7 @@ class Window(Form, Base):
                             shotFullPath = osp.join(shotPath, dirName)
                             nukescripts.node_copypaste()
                             bd = self.getSelectedNodes(typ='BackdropNode')[0]
-                            bd.knob('label').setValue(shotName)
+                            bd.knob('label').setValue(seq_sh)
                             bd_nodes = nuke.selectedNodes()
                             bd_nodes.remove(bd)
                             y = bd.ypos()
@@ -202,6 +218,13 @@ class Window(Form, Base):
                             xDiff = bd.xpos() - x
                             for node in bd_nodes:
                                 node.setXYpos(node.xpos() + xDiff, node.ypos() + yDiff)
+                            if writeNode:
+                                outputPath = writeNode.knob('file').getValue()
+                                if outputPath:
+                                    outputPath = qutil.dirname(outputPath, depth=2)
+                                    outputPath = osp.join(outputPath, shotName, shotName+'.%04d.jpg').replace('\\', '/')
+                                    writeNode = self.getSelectedNodes('Write')[0]
+                                    writeNode.knob('file').setValue(outputPath)
                             self.replacePath(shotFullPath)
                             bd_orig = bd
                             shotLen -= 1
@@ -214,6 +237,11 @@ class Window(Form, Base):
                 self.mainProgressBar.setMaximum(0)
                 self.progressBar.hide()
                 self.mainProgressBar.hide()
+        else:
+            msgBox.showMessage(self, title=__title__,
+                               msg='No BackdropNode found in the selection',
+                               icon=QMessageBox.Information)
+            return
         if errors:
             details = '\n\n'.join(errors)
             msgBox.showMessage(self, title=__title__,
