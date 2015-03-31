@@ -90,8 +90,8 @@ class Window(Form, Base):
         items = self.getSelectedShots()
         if items:
             s = ''
-            if len(items) > 1:
-                s = '...'
+            if len(items) > 2:
+                s = ',...'
             self.shotsButton.setText(','.join(items[:2]) + s)
         else:
             self.shotsButton.setText('--Select Shots--')
@@ -151,8 +151,8 @@ class Window(Form, Base):
 
     def getPath(self, showMsg=True):
         path = self.pathBox.text()
-        if not path:
-            if showMsg:
+        if showMsg:
+            if not path:
                 msgBox.showMessage(self, title=__title__,
                                    msg='Sequence path not specified',
                                    icon=QMessageBox.Information)
