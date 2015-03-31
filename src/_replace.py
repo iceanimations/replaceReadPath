@@ -180,12 +180,13 @@ class Window(Form, Base):
             self.createSequence()
         else: self.replacePath()
         
-    def getSelectedNodes(self, typ='Read'):
+    def getSelectedNodes(self, typ='Read', msg=True):
         nodes = nuke.selectedNodes(typ)
         if not nodes:
-            msgBox.showMessage(self, title=__title__,
-                            msg='No "%s" found in the selection'%typ,
-                            icon=QMessageBox.Information)
+            if msg:
+                msgBox.showMessage(self, title=__title__,
+                                msg='No "%s" found in the selection'%typ,
+                                icon=QMessageBox.Information)
         return nodes
     
     def getShotPath(self):
@@ -199,7 +200,9 @@ class Window(Form, Base):
     def createSequence(self):
         del self.redNodes[:]
         bd_orig = self.getSelectedNodes(typ='BackdropNode')
-        writeNode = self.getSelectedNodes('Write')
+        if not bd_orig:
+            return
+        writeNode = self.getSelectedNodes('Write', msg=False)
         msg = ''
         if not writeNode:
             msg = 'Selected BackdropNode does not contain a Write node'
@@ -215,77 +218,76 @@ class Window(Form, Base):
                 return
         if writeNode:
             writeNode = writeNode[0]
-        if bd_orig:
-            if len(bd_orig) > 1:
-                msgBox.showMessage(self, title=__title__,
-                                   msg='More than one backdrops found in the selection',
-                                   icon=QMessageBox.Information)
-                return
-            bd_orig = bd_orig[0]
-            seqPath = self.getPath()
-            currentShotPath = self.getShotPath() # shot path for selected backdrop
-            errors = []
-            if seqPath:
-                shotNames = self.getSelectedShots()
-                if not shotNames:
-                    shotNames = os.listdir(seqPath)
-                try:
-                    shotNames.remove(osp.basename(osp.dirname(currentShotPath)))
-                except ValueError:
-                    pass
-                shotLen = len(shotNames)
-                shotNames = sorted(shotNames)
-                seqName = osp.basename(seqPath)
-                self.mainProgressBar.show()
-                self.mainProgressBar.setMaximum(shotLen)
-                for i, shotName in enumerate(shotNames):
-                    seq_sh = '_'.join([seqName, shotName])
-                    shotPath = osp.join(seqPath, shotName)
-                    dirs = os.listdir(shotPath)
-                    if dirs:
-                        dirName = None
-                        if len(dirs) > 1:
-                            for d in dirs:
-                                if seq_sh in d:
-                                    dirName = d
-                                    break
-                        else:
-                            dirName = dirs[0]
-                        if dirName:
-                            shotFullPath = osp.join(shotPath, dirName)
-                            nukescripts.node_copypaste()
-                            bd = self.getSelectedNodes(typ='BackdropNode')[0]
-                            bd.knob('label').setValue(seq_sh)
-                            bd_nodes = nuke.selectedNodes()
-                            bd_nodes.remove(bd)
-                            y = bd.ypos()
-                            x = bd.xpos()
-                            bd.setYpos(bd_orig.ypos())
-                            bd.setXpos(bd_orig.xpos() + bd.screenWidth() + 50)
-                            yDiff = bd.ypos() - y
-                            xDiff = bd.xpos() - x
-                            for node in bd_nodes:
-                                node.setXYpos(node.xpos() + xDiff, node.ypos() + yDiff)
-                            if writeNode:
-                                outputPath = writeNode.knob('file').getValue()
-                                if outputPath:
-                                    outputPath = qutil.dirname(outputPath, depth=2)
-                                    outputPath = osp.join(outputPath, shotName, shotName+'.%04d.jpg').replace('\\', '/')
-                                    writeNode = self.getSelectedNodes('Write')[0]
-                                    writeNode.knob('file').setValue(outputPath)
-                            redToDefault.change(msg=False)
-                            self.replacePath(shotFullPath)
-                            bd_orig = bd
-                            shotLen -= 1
-                        else:
-                            errors.append('Could not find shot directory in %s'%shotPath)
+        if len(bd_orig) > 1:
+            msgBox.showMessage(self, title=__title__,
+                               msg='More than one backdrops found in the selection',
+                               icon=QMessageBox.Information)
+            return
+        bd_orig = bd_orig[0]
+        seqPath = self.getPath()
+        currentShotPath = self.getShotPath() # shot path for selected backdrop
+        errors = []
+        if seqPath:
+            shotNames = self.getSelectedShots()
+            if not shotNames:
+                shotNames = os.listdir(seqPath)
+            try:
+                shotNames.remove(osp.basename(osp.dirname(currentShotPath)))
+            except ValueError:
+                pass
+            shotLen = len(shotNames)
+            shotNames = sorted(shotNames)
+            seqName = osp.basename(seqPath)
+            self.mainProgressBar.show()
+            self.mainProgressBar.setMaximum(shotLen)
+            for i, shotName in enumerate(shotNames):
+                seq_sh = '_'.join([seqName, shotName])
+                shotPath = osp.join(seqPath, shotName)
+                dirs = os.listdir(shotPath)
+                if dirs:
+                    dirName = None
+                    if len(dirs) > 1:
+                        for d in dirs:
+                            if seq_sh in d:
+                                dirName = d
+                                break
                     else:
-                        errors.append('No directory found in %s'%shotPath)
-                    self.mainProgressBar.setValue(i+1)
-                self.mainProgressBar.setValue(0)
-                self.mainProgressBar.setMaximum(0)
-                self.progressBar.hide()
-                self.mainProgressBar.hide()
+                        dirName = dirs[0]
+                    if dirName:
+                        shotFullPath = osp.join(shotPath, dirName)
+                        nukescripts.node_copypaste()
+                        bd = self.getSelectedNodes(typ='BackdropNode')[0]
+                        bd.knob('label').setValue(seq_sh)
+                        bd_nodes = nuke.selectedNodes()
+                        bd_nodes.remove(bd)
+                        y = bd.ypos()
+                        x = bd.xpos()
+                        bd.setYpos(bd_orig.ypos())
+                        bd.setXpos(bd_orig.xpos() + bd.screenWidth() + 50)
+                        yDiff = bd.ypos() - y
+                        xDiff = bd.xpos() - x
+                        for node in bd_nodes:
+                            node.setXYpos(node.xpos() + xDiff, node.ypos() + yDiff)
+                        if writeNode:
+                            outputPath = writeNode.knob('file').getValue()
+                            if outputPath:
+                                outputPath = qutil.dirname(outputPath, depth=2)
+                                outputPath = osp.join(outputPath, shotName, shotName+'.%04d.jpg').replace('\\', '/')
+                                writeNode = self.getSelectedNodes('Write')[0]
+                                writeNode.knob('file').setValue(outputPath)
+                        redToDefault.change(msg=False)
+                        self.replacePath(shotFullPath)
+                        bd_orig = bd
+                        shotLen -= 1
+                    else:
+                        errors.append('Could not find shot directory in %s'%shotPath)
+                else:
+                    errors.append('No directory found in %s'%shotPath)
+                self.mainProgressBar.setValue(i+1)
+            self.mainProgressBar.setValue(0)
+            self.mainProgressBar.setMaximum(0)
+            self.progressBar.hide()
+            self.mainProgressBar.hide()
         else:
             msgBox.showMessage(self, title=__title__,
                                msg='No BackdropNode found in the selection',
