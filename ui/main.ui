@@ -55,6 +55,9 @@
           <height>0</height>
          </size>
         </property>
+        <property name="toolTip">
+         <string>Change red colored Read nodes to their default color</string>
+        </property>
         <property name="styleSheet">
          <string>background-color: darkRed; color: white;</string>
         </property>
@@ -70,6 +73,9 @@
           <width>112</width>
           <height>0</height>
          </size>
+        </property>
+        <property name="toolTip">
+         <string>Reload selected Read nodes</string>
         </property>
         <property name="text">
          <string>Reload Selected</string>
