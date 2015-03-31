@@ -19,6 +19,8 @@ import nukescripts
 import appUsageApp
 import json
 import time
+import redToDefault
+reload(redToDefault)
 
 rootPath = osp.dirname(osp.dirname(__file__))
 uiPath = osp.join(rootPath, 'ui')
@@ -124,8 +126,6 @@ class Window(Form, Base):
 
     def rtd(self):
         self.rtdButton.setStyleSheet('background-color: darkRed')
-        import redToDefault
-        reload(redToDefault)
         if redToDefault.change():
             self.statusBar().showMessage('Converted to default successfully', 2000)
             
@@ -273,6 +273,7 @@ class Window(Form, Base):
                                     outputPath = osp.join(outputPath, shotName, shotName+'.%04d.jpg').replace('\\', '/')
                                     writeNode = self.getSelectedNodes('Write')[0]
                                     writeNode.knob('file').setValue(outputPath)
+                            redToDefault.change(msg=False)
                             self.replacePath(shotFullPath)
                             bd_orig = bd
                             shotLen -= 1
