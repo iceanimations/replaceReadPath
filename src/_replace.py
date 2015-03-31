@@ -7,7 +7,8 @@ Created on Jan 28, 2015
 import re
 import os
 import os.path as osp
-from PyQt4.QtGui import QApplication, QMessageBox, QFileDialog, qApp
+from PyQt4.QtGui import *
+from PyQt4.QtCore import *
 from PyQt4 import uic
 import msgBox
 reload(msgBox)
@@ -63,9 +64,15 @@ class Window(Form, Base):
         self.currentDirectory = conf.get('lastDirectory', '')
         self.pathBox.setText(self.currentDirectory)
         self.redNodes = []
+        self.shotsMenu = QMenu(self)
+        self.shotsMenu.hideEvent = self.menuHideEvent
+        self.shotsButton.setMenu(self.shotsMenu)
+        self.btnWidth = self.shotsButton.width()
+        self.shotsMenu.setFixedWidth(self.btnWidth)
 
         self.progressBar.hide()
         self.mainProgressBar.hide()
+        self.shotsButton.hide()
 
         self.replaceButton.clicked.connect(self.handleReplaceButton)
         self.browseButton.clicked.connect(self.setPath)
@@ -74,8 +81,43 @@ class Window(Form, Base):
         self.rtdButton.mouseReleaseEvent = lambda event: self.rtd()
         self.reloadButton.clicked.connect(self.reloadSelected)
         self.createButton.toggled.connect(self.handleSeqButton)
+        self.pathBox.textChanged.connect(self.populateShots)
+        self.populateShots()
         
         appUsageApp.updateDatabase('replaceReadPath')
+        
+    def menuHideEvent(self, event):
+        items = self.getSelectedShots()
+        if items:
+            s = ''
+            if len(items) > 1:
+                s = '...'
+            self.shotsButton.setText(','.join(items[:2]) + s)
+        else:
+            self.shotsButton.setText('--Select Shots--')
+        QMenu.hideEvent(self.shotsMenu, event)
+            
+    def populateShots(self):
+        path = self.getPath(showMsg=False)
+        if path and osp.exists(path):
+            self.addShots(os.listdir(path))
+        else:
+            self.clearShots()
+            
+    def getSelectedShots(self):
+        return [cBox.text().strip() for cBox in [action.defaultWidget() for action in self.shotsMenu.actions()] if cBox.isChecked()]
+        
+    def addShots(self, shots):
+        shots = sorted(shots)
+        self.clearShots()
+        for shot in shots:
+            checkBox = QCheckBox(shot+' '*15, self.shotsMenu)
+            checkableAction = QWidgetAction(self.shotsMenu)
+            checkableAction.setDefaultWidget(checkBox)
+            self.shotsMenu.addAction(checkableAction)
+    
+    def clearShots(self):
+        self.shotsMenu.clear()
         
     def handleSeqButton(self, val):
         self.replaceButton.setText('Create') if val else self.replaceButton.setText('Replace')
@@ -107,18 +149,19 @@ class Window(Form, Base):
             conf['lastDirectory'] = path
             writeConf()
 
-    def getPath(self):
+    def getPath(self, showMsg=True):
         path = self.pathBox.text()
         if not path:
-            msgBox.showMessage(self, title=__title__,
-                               msg='Sequence path not specified',
-                               icon=QMessageBox.Information)
-            return
-        if not osp.exists(path):
-            msgBox.showMessage(self, title=__title__,
-                               msg='Specified path does not exist',
-                               icon=QMessageBox.Information)
-            return
+            if showMsg:
+                msgBox.showMessage(self, title=__title__,
+                                   msg='Sequence path not specified',
+                                   icon=QMessageBox.Information)
+                return
+            if not osp.exists(path):
+                msgBox.showMessage(self, title=__title__,
+                                   msg='Specified path does not exist',
+                                   icon=QMessageBox.Information)
+                return
         return path
 
     def showProgressBar(self, maxVal=0):
@@ -183,8 +226,13 @@ class Window(Form, Base):
             currentShotPath = self.getShotPath() # shot path for selected backdrop
             errors = []
             if seqPath:
-                shotNames = os.listdir(seqPath)
-                shotNames.remove(osp.basename(osp.dirname(currentShotPath)))
+                shotNames = self.getSelectedShots()
+                if not shotNames:
+                    shotNames = os.listdir(seqPath)
+                try:
+                    shotNames.remove(osp.basename(osp.dirname(currentShotPath)))
+                except ValueError:
+                    pass
                 shotLen = len(shotNames)
                 shotNames = sorted(shotNames)
                 seqName = osp.basename(seqPath)

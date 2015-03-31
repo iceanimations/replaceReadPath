@@ -7,8 +7,14 @@
     <x>0</x>
     <y>0</y>
     <width>686</width>
-    <height>149</height>
+    <height>157</height>
    </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>0</width>
+    <height>0</height>
+   </size>
   </property>
   <property name="windowTitle">
    <string>Read Node Tool</string>
@@ -71,6 +77,19 @@
        </widget>
       </item>
       <item>
+       <widget class="QPushButton" name="shotsButton">
+        <property name="minimumSize">
+         <size>
+          <width>120</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>--Select Shots--</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <spacer name="horizontalSpacer">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
@@ -123,5 +142,22 @@
   </widget>
  </widget>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>createButton</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>shotsButton</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>41</x>
+     <y>14</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>62</x>
+     <y>107</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>
