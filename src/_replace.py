@@ -52,7 +52,7 @@ def writeConf():
 
 readConf()
 
-__title__ = 'Read Node Tool'
+__title__ = 'Backdrop Tool'
 
 
 Form, Base = uic.loadUiType(osp.join(uiPath, 'main.ui'))
