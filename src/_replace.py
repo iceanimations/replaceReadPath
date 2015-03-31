@@ -183,7 +183,7 @@ class Window(Form, Base):
     def getSelectedNodes(self, typ='Read'):
         nodes = nuke.selectedNodes(typ)
         if not nodes:
-            msg.showMessage(self, title=__title__,
+            msgBox.showMessage(self, title=__title__,
                             msg='No "%s" found in the selection'%typ,
                             icon=QMessageBox.Information)
         return nodes
