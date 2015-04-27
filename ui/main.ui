@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>686</width>
-    <height>157</height>
+    <height>159</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -22,14 +22,41 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
-     <widget class="QCheckBox" name="createButton">
-      <property name="toolTip">
-       <string>Create backdrops for all shots in the specified sequence directory</string>
-      </property>
-      <property name="text">
-       <string>Create Shots</string>
-      </property>
-     </widget>
+     <layout class="QHBoxLayout" name="horizontalLayout_3">
+      <item>
+       <widget class="QCheckBox" name="createButton">
+        <property name="toolTip">
+         <string>Create backdrops for all shots in the specified sequence directory</string>
+        </property>
+        <property name="text">
+         <string>Create Shots</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="exactMatchButton">
+        <property name="toolTip">
+         <string>Find exact match for the folder names</string>
+        </property>
+        <property name="text">
+         <string>Exact Match</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer_2">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
     </item>
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout">
@@ -148,22 +175,5 @@
   </widget>
  </widget>
  <resources/>
- <connections>
-  <connection>
-   <sender>createButton</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>shotsButton</receiver>
-   <slot>setVisible(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>41</x>
-     <y>14</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>62</x>
-     <y>107</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+ <connections/>
 </ui>

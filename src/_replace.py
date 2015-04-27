@@ -326,49 +326,56 @@ class Window(Form, Base):
                     nodeName = node.name()
                     basename3 = qutil.basename(nodePath)
                     basename3Parts = qutil.splitPath(basename3)
-                    flag = False
-                    for d in passes_dirs:
-                        if basename3[:3].lower() == d[:3].lower():
-                            tempPath = osp.join(path, d)
-                            flag=True
-                            break
-                    if not flag:
-                        badNodesMapping[nodeName] = 'No directory matches the name '+ osp.join(path, basename3Parts[0])
-                        continue
-                    passes = os.listdir(tempPath)
-                    basenameMid = basename3Parts[1]
-                    basenameMidParts = basenameMid.split('_')
-
-                    # check if the basename3Parts[0] is in basename3Parts[1] eg. Env is in Env_beauty
-                    parentDirInBasename3 = False
-                    if basename3Parts[0][:3].lower() == basenameMidParts[0][:3].lower():
-                        parentDirInBasename3 =True
-                    flag = False
-                    for pas in passes:
-                        passParts = pas.split('_')
-
-                        # check if the parent directory name of pass directory is in pass name
-                        parentDirInPass = False
-                        if osp.basename(tempPath)[:3].lower() == passParts[0][:3].lower():
-                            parentDirInPass = True
-
-                        # handle the case when there is no parent directory name in pass directory name
-                        start1 = 1 if parentDirInBasename3 else 0
-                        start2 = 1 if parentDirInPass else 0
-
-                        # handle the case when the parent directory is combination of two words joined with a underscore
-                        if parentDirInBasename3 and len(basename3Parts[0].split('_')) > 1:
-                            start1 += 1
-                        if parentDirInPass:
-                            if '_'.join(passParts[:2]).lower() == osp.basename(tempPath).lower():
-                                start2 += 1
-                        if set([tname.lower() for tname in basenameMidParts[start1:]]) == set([tname2.lower() for tname2 in passParts[start2:]]):
-                            tempPath = osp.join(tempPath, pas)
-                            flag = True
-                    if not flag:
-                        badNodesMapping[nodeName] = 'No directory matches the name '+ osp.join(tempPath, basenameMid)
-                        continue
-                    fileNames = os.listdir(tempPath)
+                    if self.exactMatchButton.isChecked():
+                        tempPath = osp.dirname(osp.join(path, basename3))
+                        if not osp.exists(tempPath):
+                            badNodesMapping[nodeName] = 'No directory matches name %s'%tempPath
+                            continue
+                        fileNames = os.listdir(tempPath)
+                    else:
+                        flag = False
+                        for d in passes_dirs:
+                            if basename3[:3].lower() == d[:3].lower():
+                                tempPath = osp.join(path, d)
+                                flag=True
+                                break
+                        if not flag:
+                            badNodesMapping[nodeName] = 'No directory matches the name '+ osp.join(path, basename3Parts[0])
+                            continue
+                        passes = os.listdir(tempPath)
+                        basenameMid = basename3Parts[1]
+                        basenameMidParts = basenameMid.split('_')
+    
+                        # check if the basename3Parts[0] is in basename3Parts[1] eg. Env is in Env_beauty
+                        parentDirInBasename3 = False
+                        if basename3Parts[0][:3].lower() == basenameMidParts[0][:3].lower():
+                            parentDirInBasename3 =True
+                        flag = False
+                        for pas in passes:
+                            passParts = pas.split('_')
+    
+                            # check if the parent directory name of pass directory is in pass name
+                            parentDirInPass = False
+                            if osp.basename(tempPath)[:3].lower() == passParts[0][:3].lower():
+                                parentDirInPass = True
+    
+                            # handle the case when there is no parent directory name in pass directory name
+                            start1 = 1 if parentDirInBasename3 else 0
+                            start2 = 1 if parentDirInPass else 0
+    
+                            # handle the case when the parent directory is combination of two words joined with a underscore
+                            if parentDirInBasename3 and len(basename3Parts[0].split('_')) > 1:
+                                start1 += 1
+                            if parentDirInPass:
+                                if '_'.join(passParts[:2]).lower() == osp.basename(tempPath).lower():
+                                    start2 += 1
+                            if set([tname.lower() for tname in basenameMidParts[start1:]]) == set([tname2.lower() for tname2 in passParts[start2:]]):
+                                tempPath = osp.join(tempPath, pas)
+                                flag = True
+                        if not flag:
+                            badNodesMapping[nodeName] = 'No directory matches the name '+ osp.join(tempPath, basenameMid)
+                            continue
+                        fileNames = os.listdir(tempPath)
                     if not fileNames:
                         badNodesMapping[nodeName] = 'No file matches name '+ osp.join(tempPath, basename3Parts[-1])
                         continue
