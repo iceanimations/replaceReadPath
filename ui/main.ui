@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>686</width>
-    <height>159</height>
+    <height>162</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -175,5 +175,22 @@
   </widget>
  </widget>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>createButton</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>shotsButton</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>57</x>
+     <y>16</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>305</x>
+     <y>72</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>
