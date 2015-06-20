@@ -67,6 +67,7 @@ class Window(Form, Base):
         self.pathBox.setText(self.currentDirectory)
         self.redNodes = []
         self.shotsMenu = QMenu(self)
+        self.shotsMenu.setStyleSheet("QMenu { menu-scrollable: 1; }")
         self.shotsMenu.hideEvent = self.menuHideEvent
         self.shotsButton.setMenu(self.shotsMenu)
         self.btnWidth = self.shotsButton.width()
