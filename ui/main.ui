@@ -36,7 +36,7 @@
       <item>
        <widget class="QCheckBox" name="exactMatchButton">
         <property name="toolTip">
-         <string>Find exact match for the folder names</string>
+         <string>Find exact match for the folder names (e.g Env will not match to Environment)</string>
         </property>
         <property name="text">
          <string>Exact Match</string>
