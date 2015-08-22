@@ -21,6 +21,8 @@ import json
 import time
 import redToDefault
 reload(redToDefault)
+import cui
+reload(cui)
 
 rootPath = osp.dirname(osp.dirname(__file__))
 uiPath = osp.join(rootPath, 'ui')
@@ -66,16 +68,12 @@ class Window(Form, Base):
         self.currentDirectory = conf.get('lastDirectory', '')
         self.pathBox.setText(self.currentDirectory)
         self.redNodes = []
-        self.shotsMenu = QMenu(self)
-        self.shotsMenu.setStyleSheet("QMenu { menu-scrollable: 1; }")
-        self.shotsMenu.hideEvent = self.menuHideEvent
-        self.shotsButton.setMenu(self.shotsMenu)
-        self.btnWidth = self.shotsButton.width()
-        self.shotsMenu.setFixedWidth(self.btnWidth)
+        self.shotsMenu = cui.MultiSelectComboBox(self, msg='--Select Shots--')
+        self.buttonsLayout.insertWidget(2, self.shotsMenu)
+        self.shotsMenu.hide()
 
         self.progressBar.hide()
         self.mainProgressBar.hide()
-        self.shotsButton.hide()
 
         self.replaceButton.clicked.connect(self.handleReplaceButton)
         self.browseButton.clicked.connect(self.setPath)
@@ -88,42 +86,25 @@ class Window(Form, Base):
         self.populateShots()
         
         appUsageApp.updateDatabase('replaceReadPath')
-        
-    def menuHideEvent(self, event):
-        items = self.getSelectedShots()
-        if items:
-            s = ''
-            if len(items) > 2:
-                s = ',...'
-            self.shotsButton.setText(','.join(items[:2]) + s)
-        else:
-            self.shotsButton.setText('--Select Shots--')
-        QMenu.hideEvent(self.shotsMenu, event)
             
     def populateShots(self):
         path = self.getPath(showMsg=False)
         if path and osp.exists(path):
-            self.addShots(os.listdir(path))
+            self.shotsMenu.addItems(sorted(os.listdir(path)))
         else:
-            self.clearShots()
+            self.shotsMenu.clearItems()
             
     def getSelectedShots(self):
-        return [cBox.text().strip() for cBox in [action.defaultWidget() for action in self.shotsMenu.actions()] if cBox.isChecked()]
-        
-    def addShots(self, shots):
-        shots = sorted(shots)
-        self.clearShots()
-        for shot in shots:
-            checkBox = QCheckBox(shot+' '*15, self.shotsMenu)
-            checkableAction = QWidgetAction(self.shotsMenu)
-            checkableAction.setDefaultWidget(checkBox)
-            self.shotsMenu.addAction(checkableAction)
-    
-    def clearShots(self):
-        self.shotsMenu.clear()
+        return self.shotsMenu.getSelectedItems()
         
     def handleSeqButton(self, val):
-        self.replaceButton.setText('Create') if val else self.replaceButton.setText('Replace')
+        if val:
+            self.replaceButton.setText('Create')
+            self.shotsMenu.show()
+        else:
+            self.replaceButton.setText('Replace')
+            self.shotsMenu.hide()
+        
 
     def rtd(self):
         self.rtdButton.setStyleSheet('background-color: darkRed')
