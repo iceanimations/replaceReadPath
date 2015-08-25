@@ -213,6 +213,7 @@ class Window(Form, Base):
             shotNames = self.getSelectedShots()
             if not shotNames:
                 shotNames = os.listdir(seqPath)
+            
             try:
                 shotNames.remove(osp.basename(osp.dirname(currentShotPath)))
             except ValueError:
@@ -230,7 +231,9 @@ class Window(Form, Base):
                     dirName = None
                     if len(dirs) > 1:
                         for d in dirs:
-                            if seq_sh in d:
+                            if seq_sh in d or d == 'renders':
+                                if d == 'renders':
+                                    seq_sh = shotName
                                 dirName = d
                                 break
                     else:
