@@ -12,8 +12,8 @@ from PyQt4.QtCore import *
 from PyQt4 import uic
 import msgBox
 reload(msgBox)
-import qutil
-reload(qutil)
+import iutil
+reload(iutil)
 import nuke
 import nukescripts
 import appUsageApp
@@ -32,7 +32,7 @@ def getAnyReadPath():
     for node in nuke.allNodes('Read'):
         path = node.knob('file').value()
         if path and osp.exists(osp.dirname(path)):
-            return qutil.dirname(path)
+            return iutil.dirname(path)
     return "\\\\renders\\Storage\\Projects\\external\\Al_Mansour_Season_02\\02_production"
 
 conf = {}
@@ -177,7 +177,7 @@ class Window(Form, Base):
             node = nodes[0]
             path = node.knob('file').value()
             if path:
-                return qutil.dirname(path)
+                return iutil.dirname(path)
 
     def createSequence(self):
         del self.redNodes[:]
@@ -256,7 +256,7 @@ class Window(Form, Base):
                         if writeNode:
                             outputPath = writeNode.knob('file').getValue()
                             if outputPath:
-                                outputPath = qutil.dirname(outputPath, depth=2)
+                                outputPath = iutil.dirname(outputPath, depth=2)
                                 outputPath = osp.join(outputPath, shotName, shotName+'.%04d.jpg').replace('\\', '/')
                                 writeNode = self.getSelectedNodes('Write')[0]
                                 writeNode.knob('file').setValue(outputPath)
@@ -309,8 +309,8 @@ class Window(Form, Base):
                 nodePath = node.knob('file').value()
                 if nodePath:
                     nodeName = node.name()
-                    basename3 = qutil.basename(nodePath)
-                    basename3Parts = qutil.splitPath(basename3)
+                    basename3 = iutil.basename(nodePath)
+                    basename3Parts = iutil.splitPath(basename3)
                     if self.exactMatchButton.isChecked():
                         tempPath = osp.dirname(osp.join(path, basename3))
                         if not osp.exists(tempPath):
