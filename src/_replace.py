@@ -423,5 +423,5 @@ class Window(Form, Base):
                     self.redNodes.extend([node for node in badNodesMapping.keys()])
 
             if self.replaceCameras():
-                replaceCamera.replaceCameraFromNodes(nodes)
+                replaceCamera.replaceBackdropCameras(nodes)
 
