@@ -124,7 +124,7 @@ class Window(Form, Base):
     def createSeq(self):
         return self.createButton.isChecked()
 
-    def replaceCameras():
+    def replaceCameras(self):
         return self.cameraBox.isChecked()
 
     def setPath(self):
