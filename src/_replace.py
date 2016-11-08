@@ -18,11 +18,13 @@ import nuke
 import nukescripts
 import appUsageApp
 import json
-import time
 import redToDefault
 reload(redToDefault)
 import cui
 reload(cui)
+
+import replaceCamera
+reload(replaceCamera)
 
 rootPath = osp.dirname(osp.dirname(__file__))
 uiPath = osp.join(rootPath, 'ui')
@@ -33,7 +35,7 @@ def getAnyReadPath():
         path = node.knob('file').value()
         if path and osp.exists(osp.dirname(path)):
             return iutil.dirname(path)
-    return "\\\\renders\\Storage\\Projects\\external\\Al_Mansour_Season_02\\02_production"
+    return "\\\\renders\\Storage\\Projects\\external\\Al_Mansour_Season_03\\02_production"
 
 conf = {}
 conf['lastDirectory'] = getAnyReadPath()
@@ -84,19 +86,19 @@ class Window(Form, Base):
         self.createButton.toggled.connect(self.handleSeqButton)
         self.pathBox.textChanged.connect(self.populateShots)
         self.populateShots()
-        
+
         appUsageApp.updateDatabase('replaceReadPath')
-            
+
     def populateShots(self):
         path = self.getPath(showMsg=False)
         if path and osp.exists(path):
             self.shotsMenu.addItems(sorted(os.listdir(path)))
         else:
             self.shotsMenu.clearItems()
-            
+
     def getSelectedShots(self):
         return self.shotsMenu.getSelectedItems()
-        
+
     def handleSeqButton(self, val):
         if val:
             self.replaceButton.setText('Create')
@@ -104,13 +106,13 @@ class Window(Form, Base):
         else:
             self.replaceButton.setText('Replace')
             self.shotsMenu.hide()
-        
+
 
     def rtd(self):
         self.rtdButton.setStyleSheet('background-color: darkRed')
         if redToDefault.change():
             self.statusBar().showMessage('Converted to default successfully', 2000)
-            
+
     def reloadSelected(self):
         for node in self.getSelectedNodes():
             node.knob('reload').execute()
@@ -118,9 +120,12 @@ class Window(Form, Base):
     def closeEvent(self, event):
         self.deleteLater()
         del self
-    
+
     def createSeq(self):
         return self.createButton.isChecked()
+
+    def replaceCameras():
+        return self.cameraBox.isChecked()
 
     def setPath(self):
         path = QFileDialog.getExistingDirectory(self, 'Select Directory',
@@ -156,12 +161,12 @@ class Window(Form, Base):
             self.progressBar.hide()
         self.progressBar.setValue(0)
         qApp.processEvents()
-        
+
     def handleReplaceButton(self):
         if self.createSeq():
             self.createSequence()
         else: self.replacePath()
-        
+
     def getSelectedNodes(self, typ='Read', msg=True):
         nodes = nuke.selectedNodes(typ)
         if not nodes:
@@ -170,7 +175,7 @@ class Window(Form, Base):
                                 msg='No "%s" found in the selection'%typ,
                                 icon=QMessageBox.Information)
         return nodes
-    
+
     def getShotPath(self):
         nodes = self.getSelectedNodes()
         if nodes:
@@ -202,8 +207,8 @@ class Window(Form, Base):
             writeNode = writeNode[0]
         if len(bd_orig) > 1:
             msgBox.showMessage(self, title=__title__,
-                               msg='More than one backdrops found in the selection',
-                               icon=QMessageBox.Information)
+                    msg='More than one backdrops found in the selection',
+                    icon=QMessageBox.Information)
             return
         bd_orig = bd_orig[0]
         seqPath = self.getPath()
@@ -213,7 +218,7 @@ class Window(Form, Base):
             shotNames = self.getSelectedShots()
             if not shotNames:
                 shotNames = os.listdir(seqPath)
-            
+
             try:
                 shotNames.remove(osp.basename(osp.dirname(currentShotPath)))
             except ValueError:
@@ -293,6 +298,7 @@ class Window(Form, Base):
         nodes = self.getSelectedNodes()
         if not nodes:
             return
+
         if not path:
             path = self.getPath()
         if path:
@@ -305,12 +311,15 @@ class Window(Form, Base):
                 return
             self.showProgressBar(len(nodes))
             count = 1
+
             for node in nodes:
                 nodePath = node.knob('file').value()
+
                 if nodePath:
                     nodeName = node.name()
                     basename3 = iutil.basename(nodePath)
                     basename3Parts = iutil.splitPath(basename3)
+
                     if self.exactMatchButton.isChecked():
                         tempPath = osp.dirname(osp.join(path, basename3))
                         if not osp.exists(tempPath):
@@ -330,40 +339,45 @@ class Window(Form, Base):
                         passes = os.listdir(tempPath)
                         basenameMid = basename3Parts[1]
                         basenameMidParts = basenameMid.split('_')
-    
+
                         # check if the basename3Parts[0] is in basename3Parts[1] eg. Env is in Env_beauty
                         parentDirInBasename3 = False
                         if basename3Parts[0][:3].lower() == basenameMidParts[0][:3].lower():
                             parentDirInBasename3 =True
                         flag = False
+
                         for pas in passes:
                             passParts = pas.split('_')
-    
+
                             # check if the parent directory name of pass directory is in pass name
                             parentDirInPass = False
                             if osp.basename(tempPath)[:3].lower() == passParts[0][:3].lower():
                                 parentDirInPass = True
-    
+
                             # handle the case when there is no parent directory name in pass directory name
                             start1 = 1 if parentDirInBasename3 else 0
                             start2 = 1 if parentDirInPass else 0
-    
+
                             # handle the case when the parent directory is combination of two words joined with a underscore
                             if parentDirInBasename3 and len(basename3Parts[0].split('_')) > 1:
                                 start1 += 1
                             if parentDirInPass:
                                 if '_'.join(passParts[:2]).lower() == osp.basename(tempPath).lower():
                                     start2 += 1
+
                             if set([tname.lower() for tname in basenameMidParts[start1:]]) == set([tname2.lower() for tname2 in passParts[start2:]]):
                                 tempPath = osp.join(tempPath, pas)
                                 flag = True
+
                         if not flag:
                             badNodesMapping[nodeName] = 'No directory matches the name '+ osp.join(tempPath, basenameMid)
                             continue
                         fileNames = os.listdir(tempPath)
+
                     if not fileNames:
                         badNodesMapping[nodeName] = 'No file matches name '+ osp.join(tempPath, basename3Parts[-1])
                         continue
+
                     filename = fileNames[0]
                     if len(fileNames) > 1:
                         frames = []
@@ -392,6 +406,7 @@ class Window(Form, Base):
                     qApp.processEvents()
                     count += 1
             self.hideProgressBar()
+
             if badNodesMapping:
                 numNodes = len(badNodesMapping)
                 s = 's' if numNodes > 1 else ''
@@ -406,3 +421,7 @@ class Window(Form, Base):
                                        details=detail)
                 else:
                     self.redNodes.extend([node for node in badNodesMapping.keys()])
+
+            if self.replaceCameras():
+                replaceCamera.replaceCameraFromNodes(nodes)
+
