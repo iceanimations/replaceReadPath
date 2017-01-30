@@ -23,6 +23,8 @@ import redToDefault
 reload(redToDefault)
 import cui
 reload(cui)
+import createNukeMenu
+reload(createNukeMenu)
 
 rootPath = osp.dirname(osp.dirname(__file__))
 uiPath = osp.join(rootPath, 'ui')
@@ -84,8 +86,18 @@ class Window(Form, Base):
         self.createButton.toggled.connect(self.handleSeqButton)
         self.pathBox.textChanged.connect(self.populateShots)
         self.populateShots()
+        self.populateOtherBox()
         
         appUsageApp.updateDatabase('replaceReadPath')
+        
+    def populateOtherBox(self):
+        layout = cui.FlowLayout(self.otherToolsBox)
+        self.otherToolsBox.setLayout(layout)
+        for key, val in createNukeMenu.nukeMenu.items():
+            if key != __title__:
+                btn = QPushButton(key, self)
+                layout.addWidget(btn)
+                btn.clicked.connect(val[0])
             
     def populateShots(self):
         path = self.getPath(showMsg=False)
