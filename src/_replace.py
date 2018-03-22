@@ -297,6 +297,7 @@ class Window(Form, Base):
                             if outputPath:
                                 outputPath = iutil.dirname(outputPath, depth=2)
                                 seqName = osp.basename(outputPath)
+                                seq_sh = '_'.join([seqName, shotName])
                                 outputPath = osp.join(
                                         outputPath, seq_sh,
                                         seq_sh + '.%04d.jpg').replace(
