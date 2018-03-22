@@ -296,9 +296,11 @@ class Window(Form, Base):
                             outputPath = writeNode.knob('file').getValue()
                             if outputPath:
                                 outputPath = iutil.dirname(outputPath, depth=2)
+                                seqName = osp.basename(outputPath)
                                 outputPath = osp.join(
-                                    outputPath, shotName,
-                                    shotName + '.%04d.jpg').replace('\\', '/')
+                                        outputPath, seq_sh,
+                                        seq_sh + '.%04d.jpg').replace(
+                                                '\\', '/')
                                 writeNode = self.getSelectedNodes('Write')[0]
                                 writeNode.knob('file').setValue(outputPath)
                                 try:
