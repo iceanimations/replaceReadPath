@@ -509,5 +509,4 @@ class Window(Form, Base):
                         [node for node in badNodesMapping.keys()])
 
             if self.replaceCameras():
-                replaceCamera.replaceBackdropCameras(nodes,
-                                                     not self.createSeq())
+                replaceCamera.replaceBackdropCameras(nodes)
