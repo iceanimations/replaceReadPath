@@ -7,18 +7,20 @@ Created on Jan 28, 2015
 import re
 import os
 import os.path as osp
-from PyQt4 import QtGui as gui
-from PyQt4 import uic
-import msgBox
-import iutil
+import json
+
 import nuke
 import nukescripts
-import appUsageApp
-import json
+
+from Qt.QtWidgets import (
+        QMessageBox, QApplication, QPushButton, QFileDialog, QMainWindow)
+from Qt.QtCompat import loadUi
+
+import iutil
 import redToDefault
-import cui
 import createNukeMenu
 import replaceCamera
+from utilities import cui, msgBox, appUsageApp
 
 
 reload(cui)
@@ -69,13 +71,11 @@ readConf()
 
 __title__ = 'Backdrop Tool'
 
-Form, Base = uic.loadUiType(osp.join(uiPath, 'main.ui'))
 
-
-class Window(Form, Base):
-    def __init__(self, parent=gui.QApplication.activeWindow()):
+class Window(QMainWindow):
+    def __init__(self, parent=QApplication.activeWindow()):
         super(Window, self).__init__(parent)
-        self.setupUi(self)
+        loadUi(os.path.join(uiPath, 'main.ui'), self)
 
         self.currentDirectory = conf.get('lastDirectory', '')
         self.pathBox.setText(self.currentDirectory)
@@ -107,7 +107,7 @@ class Window(Form, Base):
         self.otherToolsBox.setLayout(layout)
         for key, val in createNukeMenu.nukeMenu.items():
             if key != __title__:
-                btn = gui.QPushButton(key, self)
+                btn = QPushButton(key, self)
                 layout.addWidget(btn)
                 btn.clicked.connect(val[0])
 
@@ -150,8 +150,8 @@ class Window(Form, Base):
         return self.cameraBox.isChecked()
 
     def setPath(self):
-        path = gui.QFileDialog.getExistingDirectory(self, 'Select Directory',
-                                                    self.currentDirectory)
+        path = QFileDialog.getExistingDirectory(self, 'Select Directory',
+                                                self.currentDirectory)
         if path:
             self.pathBox.setText(path)
             self.currentDirectory = path
@@ -166,27 +166,27 @@ class Window(Form, Base):
                     self,
                     title=__title__,
                     msg='Sequence path not specified',
-                    icon=gui.QMessageBox.Information)
+                    icon=QMessageBox.Information)
                 return
             if not osp.exists(path):
                 msgBox.showMessage(
                     self,
                     title=__title__,
                     msg='Specified path does not exist',
-                    icon=gui.QMessageBox.Information)
+                    icon=QMessageBox.Information)
                 return
         return path
 
     def showProgressBar(self, maxVal=0):
         self.progressBar.show()
         self.progressBar.setMaximum(maxVal)
-        gui.qApp.processEvents()
+        QApplication.instance().processEvents()
 
     def hideProgressBar(self):
         if not self.createSeq():
             self.progressBar.hide()
         self.progressBar.setValue(0)
-        gui.qApp.processEvents()
+        QApplication.instance().processEvents()
 
     def handleReplaceButton(self):
         if self.createSeq():
@@ -202,7 +202,7 @@ class Window(Form, Base):
                     self,
                     title=__title__,
                     msg='No "%s" found in the selection' % typ,
-                    icon=gui.QMessageBox.Information)
+                    icon=QMessageBox.Information)
         return nodes
 
     def getShotPath(self):
@@ -230,9 +230,9 @@ class Window(Form, Base):
                 title=__title__,
                 msg=msg,
                 ques='Do you want to proceed?',
-                icon=gui.QMessageBox.Information,
-                btns=gui.QMessageBox.Yes | gui.QMessageBox.No)
-            if btn == gui.QMessageBox.No:
+                icon=QMessageBox.Information,
+                btns=QMessageBox.Yes | QMessageBox.No)
+            if btn == QMessageBox.No:
                 return
         if writeNode:
             writeNode = writeNode[0]
@@ -241,7 +241,7 @@ class Window(Form, Base):
                 self,
                 title=__title__,
                 msg='More than one backdrops found in the selection',
-                icon=gui.QMessageBox.Information)
+                icon=QMessageBox.Information)
             return
         bd_orig = bd_orig[0]
         seqPath = self.getPath()
@@ -327,7 +327,7 @@ class Window(Form, Base):
                 self,
                 title=__title__,
                 msg='No BackdropNode found in the selection',
-                icon=gui.QMessageBox.Information)
+                icon=QMessageBox.Information)
             return
         if errors:
             details = '\n\n'.join(errors)
@@ -336,14 +336,14 @@ class Window(Form, Base):
                 title=__title__,
                 msg='Could not create comps for %s shots' % shotLen,
                 details=details,
-                icon=gui.QMessageBox.Information)
+                icon=QMessageBox.Information)
         if self.redNodes:
             msgBox.showMessage(
                 self,
                 title=__title__,
                 msg=('Could not replace paths for some Read nodes. They are '
                      'marked as Red'),
-                icon=gui.QMessageBox.Information)
+                icon=QMessageBox.Information)
             del self.redNodes[:]
 
     def replacePath(self, path=None):
@@ -361,7 +361,7 @@ class Window(Form, Base):
                     self,
                     title=__title__,
                     msg='No directory found in the specified path',
-                    icon=gui.QMessageBox.Information)
+                    icon=QMessageBox.Information)
                 return
             self.showProgressBar(len(nodes))
             count = 1
@@ -458,7 +458,7 @@ class Window(Form, Base):
                         for phile in fileNames:
                             try:
                                 frames.append(
-                                    re.search('\d+\.', phile).group().strip(
+                                    re.search(r'\d+\.', phile).group().strip(
                                         '.'))
                             except:
                                 pass
@@ -485,7 +485,7 @@ class Window(Form, Base):
                         newPath = osp.join(tempPath, filename)
                     node.knob('file').setValue(newPath.replace('\\', '/'))
                     self.progressBar.setValue(count)
-                    gui.qApp.processEvents()
+                    QApplication.instance().processEvents()
                     count += 1
             self.hideProgressBar()
 
@@ -502,7 +502,7 @@ class Window(Form, Base):
                         title=__title__,
                         msg='Could not replace the path for ' + str(numNodes) +
                         ' node' + s,
-                        icon=gui.QMessageBox.Information,
+                        icon=QMessageBox.Information,
                         details=detail)
                 else:
                     self.redNodes.extend(
