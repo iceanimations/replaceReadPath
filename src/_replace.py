@@ -73,7 +73,7 @@ __title__ = 'Backdrop Tool'
 
 
 class Window(QMainWindow):
-    def __init__(self, parent=QApplication.activeWindow()):
+    def __init__(self, parent=None):
         super(Window, self).__init__(parent)
         loadUi(os.path.join(uiPath, 'main.ui'), self)
 
