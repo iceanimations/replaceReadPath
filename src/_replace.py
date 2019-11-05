@@ -253,9 +253,15 @@ class Window(QMainWindow):
                 shotNames = os.listdir(seqPath)
 
             try:
-                shotNames.remove(osp.basename(osp.dirname(currentShotPath)))
+                currentShot = osp.basename(osp.dirname(currentShotPath))
+                currentSequence = osp.basename(osp.dirname(osp.dirname(
+                    currentShotPath)))
+                newSequence = osp.basename(seqPath)
+                if currentSequence == newSequence:
+                    shotNames.remove(currentShot)
             except ValueError:
                 pass
+
             shotLen = len(shotNames)
             shotNames = sorted(shotNames)
             seqName = osp.basename(seqPath)
